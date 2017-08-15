@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  scheduleapi:
+    image: scheduleapi
+    build:
+      context: ./ScheduleAPI
+      dockerfile: Dockerfile
