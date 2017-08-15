@@ -83,11 +83,7 @@ namespace ScheduleAPI.Controllers
         [HttpGet("nextdelivery/from/{fromUtcDateTime:datetime}/to/{toUtcDateTime:datetime}")]
         public IEnumerable<ScheduleViewModel> GetSchedulesWithNextDeliveryInRange(DateTime fromUtcDateTime, DateTime toUtcDateTime, [FromHeader(Name = "YM-Accept-TimeZoneId")] string timeZoneId)
         {
-            TimeZoneInfo dtzi = null;
-            if (timeZoneId != null)
-            {
-                dtzi = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-            }
+            var dtzi = timeZoneId == null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
 
             var schedules = _scheduleService.GetSchedulesWithNextDeliveryInRange(fromUtcDateTime, toUtcDateTime);
             var svms = schedules.Select(x => ScheduleBuilder.BuildFromISchedule<ScheduleViewModel>(x, dtzi));
