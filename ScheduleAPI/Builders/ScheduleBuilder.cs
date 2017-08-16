@@ -10,7 +10,7 @@ namespace ScheduleAPI.Builders
 {
     public static class ScheduleBuilder
     {
-        public static T BuildFromISchedule<T>(ISchedule tzSchedule, TimeZoneInfo toFromTzi) where T : class, ISchedule, new()
+        public static T BuildFromIScheduleForTimeZoneId<T>(ISchedule tzSchedule, string toFromTziId) where T : class, ISchedule, new()
         {
             if (tzSchedule == null)
             {
@@ -22,6 +22,8 @@ namespace ScheduleAPI.Builders
                 return (T)tzSchedule;
             }
 
+            var toFromTzi = string.IsNullOrEmpty(toFromTziId) ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(toFromTziId);
+
             T iSchedule = new T()
             {
                 ScheduleId = tzSchedule.ScheduleId,
@@ -32,7 +34,7 @@ namespace ScheduleAPI.Builders
                 RepeatTimeUnitCode = tzSchedule.RepeatTimeUnitCode,
                 RepeatDaysOfWeek = tzSchedule.RepeatDaysOfWeek,
                 RepeatDayOfMonth = tzSchedule.RepeatDayOfMonth,
-                TimeZoneId = toFromTzi == null ? TimeZoneInfo.Utc.Id : toFromTzi.Id
+                TimeZoneId = toFromTzi.Id
             };
 
             if (toFromTzi == null)
@@ -109,6 +111,11 @@ namespace ScheduleAPI.Builders
 
         private static DateTime? ConvertDateTimeToFromUtcForTimeZone(DateTime dt, ConversionDirections cd, TimeZoneInfo tzi)
         {
+            if (tzi == TimeZoneInfo.Utc)
+            {
+                return dt;
+            }
+
             switch (cd)
             {
                 case ConversionDirections.To:

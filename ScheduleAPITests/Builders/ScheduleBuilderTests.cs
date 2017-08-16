@@ -27,7 +27,7 @@ namespace ScheduleAPITests.Builders
                 TimeZoneId = "West Asia Standard Time"
             };
 
-            var svm = ScheduleBuilder.BuildFromISchedule<ScheduleViewModel>(s, dtzi);
+            var svm = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<ScheduleViewModel>(s, dtzi.Id);
 
             var expectedActivateDateTime = TimeZoneInfo.ConvertTime(s.ActivateDateTime.Value, dtzi);
             var expectedStartDateTime = TimeZoneInfo.ConvertTime(s.StartDateTime.Value, dtzi);
@@ -58,7 +58,7 @@ namespace ScheduleAPITests.Builders
                 TimeZoneId = "Eastern Standard Time"
             };
 
-            var svm = ScheduleBuilder.BuildFromISchedule<ScheduleViewModel>(s, dtzi);
+            var svm = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<ScheduleViewModel>(s, dtzi.Id);
 
             var expectedActivateDateTime = TimeZoneInfo.ConvertTime(s.ActivateDateTime.Value, dtzi);
             var expectedStartDateTime = TimeZoneInfo.ConvertTime(s.StartDateTime.Value, dtzi);
@@ -89,7 +89,7 @@ namespace ScheduleAPITests.Builders
                 TimeZoneId = "West Asia Standard Time"
             };
 
-            var s = ScheduleBuilder.BuildFromISchedule<Schedule>(svm, stzi);
+            var s = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<Schedule>(svm, stzi.Id);
 
             var expectedActivateDateTime = TimeZoneInfo.ConvertTimeToUtc(svm.ActivateDateTime.Value, stzi);
             var expectedStartDateTime = TimeZoneInfo.ConvertTimeToUtc(svm.StartDateTime.Value, stzi);
@@ -121,7 +121,7 @@ namespace ScheduleAPITests.Builders
                 TimeZoneId = "Eastern Standard Time"
             };
 
-            var s = ScheduleBuilder.BuildFromISchedule<Schedule>(svm, stzi);
+            var s = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<Schedule>(svm, stzi.Id);
 
             var expectedActivateDateTime = TimeZoneInfo.ConvertTimeToUtc(svm.ActivateDateTime.Value, stzi);
             var expectedStartDateTime = TimeZoneInfo.ConvertTimeToUtc(svm.StartDateTime.Value, stzi);

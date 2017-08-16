@@ -25,31 +25,19 @@ namespace ScheduleAPI.Controllers
         [HttpGet]
         public IEnumerable<ScheduleViewModel> List([FromHeader(Name = "YM-Accept-TimeZoneId")] string timeZoneId)
         {
-            TimeZoneInfo dtzi = null;
-            if (timeZoneId != null)
-            {
-                dtzi = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-            }
-
             var schedules = _scheduleService.GetSchedules();
 
-            return schedules.Select(x => ScheduleBuilder.BuildFromISchedule<ScheduleViewModel>(x, dtzi));
+            return schedules.Select(x => ScheduleBuilder.BuildFromIScheduleForTimeZoneId<ScheduleViewModel>(x, timeZoneId));
         }
 
         [HttpGet("/schedule/{id}")]
         public IActionResult Get(string id, [FromHeader(Name = "YM-Accept-TimeZoneId")] string timeZoneId)
         {
-            TimeZoneInfo dtzi = null;
-            if (timeZoneId != null)
-            {
-                dtzi = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-            }
-
             var s = _scheduleService.GetSchedule(id);
 
             if (s == null) return NotFound();
 
-            var svm = ScheduleBuilder.BuildFromISchedule<ScheduleViewModel>(s, dtzi);
+            var svm = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<ScheduleViewModel>(s, timeZoneId);
 
             return Ok(svm);
         }
@@ -57,6 +45,11 @@ namespace ScheduleAPI.Controllers
         [HttpPost("/schedule")]
         public IActionResult Post([FromBody]ScheduleViewModel svm)
         {
+            if (string.IsNullOrEmpty(svm.TimeZoneId))
+            {
+                return BadRequest("A TimeZoneId must be specified for the schedule");
+            }
+
             var stzi = TimeZoneInfo.FindSystemTimeZoneById(svm.TimeZoneId);
             _scheduleService.CreateSchedule(svm, stzi);
 
@@ -66,10 +59,13 @@ namespace ScheduleAPI.Controllers
         [HttpPut("/schedule/{id}")]
         public IActionResult Put(string id, [FromBody]ScheduleViewModel svm)
         {
-            var stzi = TimeZoneInfo.FindSystemTimeZoneById(svm.TimeZoneId);
+            if (string.IsNullOrEmpty(svm.TimeZoneId))
+            {
+                return BadRequest("A TimeZoneId must be specified for the schedule");
+            }
 
             var oldSchedule = _scheduleService.GetSchedule(id);
-            var updatedSchedule = ScheduleBuilder.BuildFromISchedule<Schedule>(svm, stzi);
+            var updatedSchedule = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<Schedule>(svm, svm.TimeZoneId);
 
             updatedSchedule.ScheduleId = Guid.Parse(id);
             _scheduleService.SaveSchedule(updatedSchedule);
@@ -83,10 +79,8 @@ namespace ScheduleAPI.Controllers
         [HttpGet("nextdelivery/from/{fromUtcDateTime:datetime}/to/{toUtcDateTime:datetime}")]
         public IEnumerable<ScheduleViewModel> GetSchedulesWithNextDeliveryInRange(DateTime fromUtcDateTime, DateTime toUtcDateTime, [FromHeader(Name = "YM-Accept-TimeZoneId")] string timeZoneId)
         {
-            var dtzi = timeZoneId == null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-
             var schedules = _scheduleService.GetSchedulesWithNextDeliveryInRange(fromUtcDateTime, toUtcDateTime);
-            var svms = schedules.Select(x => ScheduleBuilder.BuildFromISchedule<ScheduleViewModel>(x, dtzi));
+            var svms = schedules.Select(x => ScheduleBuilder.BuildFromIScheduleForTimeZoneId<ScheduleViewModel>(x, timeZoneId));
 
             return svms;
         }
@@ -95,6 +89,24 @@ namespace ScheduleAPI.Controllers
         public IEnumerable<string> GetTimeZones()
         {
             return TimeZoneInfo.GetSystemTimeZones().Select(x => x.Id);
+        }
+
+        [HttpGet("/schedule/{id}/upcommingDeliveries/{occurences:int}")]
+        public IActionResult GetNextDeliveriesForSchedule(string id, int occurences, [FromHeader(Name = "YM-Accept-TimeZoneId")] string timeZoneId)
+        {
+            var schedule = _scheduleService.GetSchedule(id);
+
+            if (schedule == null) return NotFound();
+
+            var tzi = string.IsNullOrEmpty(timeZoneId) ? null : TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            var nextDeliveryDateTimes = tzi == null
+                ? schedule.NextDeliveryDateTimes(occurences)
+                : schedule.NextDeliveryDateTimes(occurences)
+                    .Where(x => x.HasValue)
+                    .Select(x => TimeZoneInfo.ConvertTime(x.Value, tzi))
+                    .Cast<DateTime?>();
+
+            return Ok(nextDeliveryDateTimes);
         }
     }
 }

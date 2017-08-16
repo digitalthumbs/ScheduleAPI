@@ -32,29 +32,36 @@ namespace ScheduleAPI.Models
         public DateTime? NextDeliveryDateTime
         {
             //optimized to only recalculate if private member is null
-            get { return _nextDeliveryDateTime ?? (_nextDeliveryDateTime = CalculateNextDeliveryDate()); }
+            get { return _nextDeliveryDateTime ?? (_nextDeliveryDateTime = CalculateNextDeliveryDateTimes(1).FirstOrDefault()); }
         }
 
-        private DateTime? CalculateNextDeliveryDate()
+        public IEnumerable<DateTime?> NextDeliveryDateTimes(int occurrences)
         {
+            return CalculateNextDeliveryDateTimes(occurrences);
+        }
+
+        private IEnumerable<DateTime?> CalculateNextDeliveryDateTimes(int maxOccurences)
+        {
+            var retVal = new List<DateTime?>();
             DateTime utcNow = DateTime.UtcNow;
 
             //can not calculate a next delivery date if start or activate dates do not exist.
             if (!StartDateTime.HasValue && !ActivateDateTime.HasValue)
             {
-                return null;
+                return retVal;
             }
 
             //check if the stop date exists and has already passed.
             if (StopDateTime.HasValue && utcNow > StopDateTime.Value)
             {
-                return null;
+                return retVal;
             }
 
             //check if this is the first delivery
             if (utcNow <= ActivateDateTime.Value)
             {
-                return ActivateDateTime.Value;
+                retVal.Add(ActivateDateTime.Value);
+                return retVal;
             }
 
             if (RepeatCode.GetValueOrDefault() == ScheduleRepeatCodes.Repeat)
@@ -68,13 +75,13 @@ namespace ScheduleAPI.Models
                 switch (RepeatTimeUnitCode.GetValueOrDefault())
                 {
                     case ScheduleRepeatTimeUnitCodes.Hourly:
-                        return CalculateHourlyNextDeliveryDateTime(utcNow);
+                        return CalculateHourlyNextDeliveryDateTimes(utcNow, maxOccurences);
                     case ScheduleRepeatTimeUnitCodes.Daily:
-                        return CalculateDailyNextDeliveryDateTime(utcNow);
+                        return CalculateDailyNextDeliveryDateTimes(utcNow, maxOccurences);
                     case ScheduleRepeatTimeUnitCodes.Weekly:
-                        return CalculateWeeklyNextDeliveryDateTime(utcNow);
+                        return CalculateWeeklyNextDeliveryDateTimes(utcNow, maxOccurences);
                     case ScheduleRepeatTimeUnitCodes.Monthly:
-                        return CalculateMonthlyNextDeliveryDateTime(utcNow);
+                        return CalculateMonthlyNextDeliveryDateTimes(utcNow, maxOccurences);
                 }
             }
 
@@ -83,29 +90,35 @@ namespace ScheduleAPI.Models
 
         }
 
-        private DateTime? CalculateMonthlyNextDeliveryDateTime(DateTime fromUtcDateTime)
+        private IEnumerable<DateTime?> CalculateMonthlyNextDeliveryDateTimes(DateTime fromUtcDateTime, int maxOccurences)
         {
             throw new NotImplementedException();
         }
 
-        private DateTime? CalculateWeeklyNextDeliveryDateTime(DateTime fromUtcDateTime)
+        private IEnumerable<DateTime?> CalculateWeeklyNextDeliveryDateTimes(DateTime fromUtcDateTime, int maxOccurences)
         {
+            var retVal = new List<DateTime?>();
             var currDayOfWeek = fromUtcDateTime.DayOfWeek;
             var currDayOfWeekString = currDayOfWeek.ToString();
             var currRepeatDayOfWeek = (ScheduleRepeatDaysOfWeekFlags)Enum.Parse(typeof(ScheduleRepeatDaysOfWeekFlags), currDayOfWeekString);
 
             var dayNum = (int)currDayOfWeek;
             int addDays = 0;
-            var found = false;
+            var occurences = 0;
             //find out how many days away we are from the next repeat day
-            while (!found)
+            while (occurences < maxOccurences)
             {
                 var nextUtcDateTime = fromUtcDateTime.AddDays(addDays);
                 if (RepeatDaysOfWeek.HasFlag(currRepeatDayOfWeek) && nextUtcDateTime.Day > ActivateDateTime.Value.Day)
                 {
                     addDays = (nextUtcDateTime - ActivateDateTime.Value).Days;
-                    found = true;
-                    continue;
+                    retVal.Add(ActivateDateTime.Value.AddDays(addDays));
+                    occurences++;
+                    if (occurences == maxOccurences)
+                    {
+                        //stop calculating delivery dates
+                        continue;
+                    }
                 }
 
                 addDays++;
@@ -115,16 +128,16 @@ namespace ScheduleAPI.Models
                 currRepeatDayOfWeek = (ScheduleRepeatDaysOfWeekFlags)Enum.Parse(typeof(ScheduleRepeatDaysOfWeekFlags), nextDayOfWeekString);
             }
 
-            return ActivateDateTime.Value.AddDays(addDays);
+            return retVal;
         }
 
-        private DateTime? CalculateDailyNextDeliveryDateTime(DateTime fromUtcDateTime)
+        private IEnumerable<DateTime?> CalculateDailyNextDeliveryDateTimes(DateTime fromUtcDateTime, int maxOccurences)
         {
             //TODO: add specific repeatcode logic here.
             throw new NotImplementedException();
         }
 
-        private DateTime? CalculateHourlyNextDeliveryDateTime(DateTime fromUtcDateTime)
+        private IEnumerable<DateTime?> CalculateHourlyNextDeliveryDateTimes(DateTime fromUtcDateTime, int maxOccurences)
         {
             //TODO: add specific repeatcode logic here.
             throw new NotImplementedException();

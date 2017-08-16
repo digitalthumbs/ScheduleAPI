@@ -16,7 +16,10 @@ namespace ScheduleAPI.Services
         internal Schedule GetSchedule(string id)
         {
             var s = _schedules.GetValueOrDefault(id);
-            s.ResetNextDeliveryDateTime();
+            if (s != null)
+            {
+                s.ResetNextDeliveryDateTime();
+            }
             return s;
         }
 
@@ -38,11 +41,7 @@ namespace ScheduleAPI.Services
 
         internal void CreateSchedule(ScheduleViewModel svm, TimeZoneInfo sourceTzi)
         {
-            //if (svm.ActivateDateTime.HasValue) DateTime.SpecifyKind(svm.ActivateDateTime.Value, DateTimeKind.Unspecified);
-            //if (svm.StartDateTime.HasValue) DateTime.SpecifyKind(svm.StartDateTime.Value, DateTimeKind.Unspecified);
-            //if (svm.StopDateTime.HasValue) DateTime.SpecifyKind(svm.StopDateTime.Value, DateTimeKind.Unspecified);
-
-            var schedule = ScheduleBuilder.BuildFromISchedule<Schedule>(svm, sourceTzi);
+            var schedule = ScheduleBuilder.BuildFromIScheduleForTimeZoneId<Schedule>(svm, sourceTzi.Id);
             schedule.ScheduleId = Guid.NewGuid();
             SaveSchedule(schedule);
         }

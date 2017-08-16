@@ -1,6 +1,6 @@
 ﻿using ScheduleAPI.Models;
 using System;
-
+using System.Collections.Generic;
 
 namespace ScheduleAPI.ViewModels
 {
