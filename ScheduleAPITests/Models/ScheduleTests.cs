@@ -12,26 +12,21 @@ namespace ScheduleAPITests.Models
         [TestMethod]
         public void CalculateWeeklyNextDeliveryDateTimeTest_SameTimeZone_WeeklyAsDailyRepeat()
         {
-            var testDate = DateTime.UtcNow.AddSeconds(-1);
-            var schedule = new Schedule()
+            var activationDate = DateTime.SpecifyKind(new DateTime(2017, 08, 27, 8, 0, 0), DateTimeKind.Utc);
+            var nowDate = DateTime.SpecifyKind(new DateTime(2017, 08, 27, 9, 30, 0), DateTimeKind.Utc);
+            var expectedDate = activationDate.AddDays(1);
+
+            var schedule = new Schedule(new FakeDateNowRetriever(nowDate))
             {
                 TimeZoneId = "Eastern Standard Time",
-                ActivateDateTime = testDate,
+                ActivateDateTime = activationDate,
                 RepeatCode = ScheduleRepeatCodes.Repeat,
                 RepeatTimeUnitCode = ScheduleRepeatTimeUnitCodes.Weekly,
-                RepeatDaysOfWeek = ScheduleRepeatDaysOfWeekFlags.Sunday
-                | ScheduleRepeatDaysOfWeekFlags.Monday
-                | ScheduleRepeatDaysOfWeekFlags.Tuesday
-                | ScheduleRepeatDaysOfWeekFlags.Wednesday
-                | ScheduleRepeatDaysOfWeekFlags.Thursday
-                | ScheduleRepeatDaysOfWeekFlags.Friday
-                | ScheduleRepeatDaysOfWeekFlags.Saturday
-
+                RepeatDaysOfWeek = ScheduleRepeatDaysOfWeekFlags.Everyday
             };
 
             var d = schedule.NextDeliveryDateTime;
-
-            var expectedDate = testDate.AddDays(1);
+            
             Assert.AreEqual(expectedDate, d);
         }
 
