@@ -2,7 +2,7 @@
 
 namespace ScheduleAPI.Models
 {
-    public interface IDateNowRetriever
+    public interface IDateTimeUtcNow
     {
         DateTime UtcNow { get; }
     }

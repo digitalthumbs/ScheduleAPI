@@ -3,11 +3,11 @@ using ScheduleAPI.Models;
 
 namespace ScheduleAPITests.Models
 {
-    public class FakeDateNowRetriever : IDateNowRetriever
+    public class FakeDateTimeNow : IDateTimeUtcNow
     {
         public DateTime UtcNow { get; }
 
-        public FakeDateNowRetriever(DateTime utcNow)
+        public FakeDateTimeNow(DateTime utcNow)
         {
             UtcNow = utcNow;
         }

@@ -7,7 +7,7 @@ namespace ScheduleAPI.Models
 {
     public class Schedule : ISchedule
     {
-        private readonly IDateNowRetriever _nowRetriever;
+        private readonly IDateTimeUtcNow _dateTimeUtcNow;
         public Guid ScheduleId { get; set; }
         public int CompanyId { get; set; }
         public ScheduleItemTypes ScheduleItemType { get; set; }
@@ -26,12 +26,12 @@ namespace ScheduleAPI.Models
 
         public Schedule()
         {
-            _nowRetriever = new DateNowRetriever();
+            _dateTimeUtcNow = new DateTimeNow();
         }
 
-        public Schedule(IDateNowRetriever nowRetriever)
+        public Schedule(IDateTimeUtcNow dateTimeUtcNow)
         {
-            _nowRetriever = nowRetriever;
+            _dateTimeUtcNow = dateTimeUtcNow;
         }
 
         private TimeZoneInfo TimeZoneInfo
@@ -53,7 +53,7 @@ namespace ScheduleAPI.Models
         private IEnumerable<DateTime?> CalculateNextDeliveryDateTimes(int maxOccurences)
         {
             var retVal = new List<DateTime?>();
-            DateTime utcNow = _nowRetriever.UtcNow;
+            DateTime utcNow = _dateTimeUtcNow.UtcNow;
 
             //can not calculate a next delivery date if start or activate dates do not exist.
             if (!StartDateTime.HasValue && !ActivateDateTime.HasValue)

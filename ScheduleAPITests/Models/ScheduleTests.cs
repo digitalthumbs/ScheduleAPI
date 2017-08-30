@@ -16,7 +16,7 @@ namespace ScheduleAPITests.Models
             var nowDate = DateTime.SpecifyKind(new DateTime(2017, 08, 27, 9, 30, 0), DateTimeKind.Utc);
             var expectedDate = activationDate.AddDays(1);
 
-            var schedule = new Schedule(new FakeDateNowRetriever(nowDate))
+            var schedule = new Schedule(new FakeDateTimeNow(nowDate))
             {
                 TimeZoneId = "Eastern Standard Time",
                 ActivateDateTime = activationDate,
